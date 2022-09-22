@@ -4,26 +4,25 @@
 # Created By: Alexsandro Santos
 # Created Date: 15/09/2022
 # Version = 1.0
+# streamlit run app.py - Comando para rodar no Anaconda
 #----------------------------------------------------------------
 
-# Import das bibliotecas 
-import streamlit as st 
-import pandas as pd 
-from PIL import Image 
-from sklearn.model_selection import train_test_split
-from sklearn import metrics 
+# Import das bibliotecas
+import streamlit as st
+import pandas as pd
+from PIL import Image
+from sklearn import metrics
 import shap
 import matplotlib.pyplot as plt 
 import seaborn as sns 
-from utils import *
-
+from functions import * 
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
-image = Image.open('uninove.png') # Carrega imagem da Uninove
-st.image(image) # Apresenta a imagem 
+image = Image.open('uninove.png') # Imagem do front com logo da Uninove
 
-# Adiciona um retangulo azul com escrita em branco
+# Cabeçalho da tela
+st.image(image)
 html_temp = """
 <div style ="background-color:blue;padding:13px">
 <h1 style ="color:white;text-align:center;">Modelo de predição de Churn de clientes de telefonia móvel</h1>
@@ -31,23 +30,20 @@ html_temp = """
 """
 
 st.markdown(html_temp, unsafe_allow_html = True)
-st.subheader('** Modelo de predição de churn usando Random Forest **')
-st.markdown('** Este modelo foi treinado usando dados historicos de clientes com e sem churn **')
+st.subheader('**Modelo de predição de churn usando Xtreme Gradient Boosting**')
+st.markdown('**Este modelo foi treinado usando informações históricas de clientes que tiveram churn e clientes que não tiveram churn.**')
 
-
+# Função principal
 def main():
 
     st.subheader('** Selecione uma das opções abaixo: **')
-    options = st.radio('O que deseja fazer? ', ('', 'Análise Exploratória', 'Predição', 'Explicabilidade'))
+    options =st.radio('O que voce deseja fazer? ', ('', 'Análise exploratória', 'Predição de Churn', 'Explicabilidade'))
 
-    if options == 'Análise Exploratória':
-        pipeline_predict('', 'Análise Exploratória')
-
-    if options == 'Predição':
+    if options == 'Predição de Churn':
         st.subheader('Insira os dados abaixo:')
         state=st.selectbox('Escolha a sigla do estado :', ['','AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'IA','ID',\
 		'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV',\
-		'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV','WY'] )
+		'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV','WY'])
         account_length=st.number_input('Selecione o tempo como cliente :', min_value=0, max_value=250, value=0)
         area_code=st.selectbox('Selecione o codigo de area :', ['','area_code_408', 'area_code_415', 'area_code_510'])
         international_plan=st.selectbox('Selecione se o cliente tem plano internacional :', ['', 'yes', 'no'])
@@ -75,19 +71,26 @@ def main():
         ,'total_night_charge':total_night_charge,'total_intl_minutes':total_intl_minutes,'total_intl_calls':total_intl_calls\
 		,'total_intl_charge':total_intl_charge ,'number_customer_service_calls':number_customer_service_calls}
 
-        # gera o dataset para o modelo
-        df_inputed = pd.DataFrame([input_dict])
+        # Gerando dataset para predição
+        df_test = pd.DataFrame([input_dict])
 
         if st.button('Predict'):
-            st.write(df_inputed.shape)
-            st.write(df_inputed)
-            predicted_class, predicted_proba = pipeline_predict(df_inputed)
-            st.subheader('Dados inseridos pelo usuário')
-            st.write(df_inputed)
-            st.write('A predição de churn deste cliente é: {} com a probabilidade {}.'.format(predicted_class, predicted_proba))
-    
+            predict_value, proba_value = pipeline_predict(df_test, 'Predição de Churn')
+            if predict_value == '[1]':
+                predict_value = 'Churn'
+            else:
+                predict_value = '** Não Churn **'
+            proba_value = str(proba_value)
+            proba_value.replace('[]', '')
+            st.subheader('Dados inseridos pelo usuário:')
+            st.write(df_test)
+            st.write('A predição de churn deste cliente é {}, com a probabilidade de {}.'.format(predict_value, proba_value))
+        
+    if options == 'Análise exploratória':
+        pipeline_predict('', 'Análise exploratória')
+
     if options == 'Explicabilidade':
         pipeline_predict('', 'Explicabilidade')
-
+        
 if __name__ == '__main__':
     main()
